@@ -74,6 +74,15 @@ jobs:
             git fetch origin
             git reset --hard origin/main
             git clean -fd
+            
+            # Экспортируем переменные окружения для docker-compose
+            export BOT_TOKEN="${{ secrets.BOT_TOKEN }}"
+            if [ -z "$BOT_TOKEN" ]; then
+              echo "Error: BOT_TOKEN secret is not set in GitHub Secrets."
+              echo "Please set BOT_TOKEN secret in GitHub: Settings → Secrets and variables → Actions"
+              exit 1
+            fi
+            
             echo "Stopping containers..."
             docker-compose down
             echo "Building and starting containers..."
