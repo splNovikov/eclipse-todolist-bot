@@ -82,9 +82,15 @@
 ### GIT_REPOSITORY_URL (опционально)
 - **Имя:** `GIT_REPOSITORY_URL`
 - **Значение:** URL репозитория для клонирования (если директория не существует)
-- **Пример:** `https://github.com/username/eclipse-todolist-bot.git`
-- **По умолчанию:** Автоматически определяется из текущего репозитория
-- **Примечание:** Обычно не требуется, используется только если нужен другой репозиторий или приватный репозиторий
+- **Примеры:**
+  - SSH (рекомендуется для приватных): `git@github.com:username/eclipse-todolist-bot.git`
+  - HTTPS с токеном: `https://USERNAME:TOKEN@github.com/username/eclipse-todolist-bot.git`
+  - HTTPS публичный: `https://github.com/username/eclipse-todolist-bot.git`
+- **По умолчанию:** Автоматически определяется из текущего репозитория в SSH формате (`git@github.com:...`)
+- **Примечание:** 
+  - Для приватных репозиториев требуется настроить SSH-ключ на сервере для доступа к GitHub
+  - Или использовать HTTPS URL с Personal Access Token
+  - Обычно не требуется, если репозиторий уже настроен на сервере
 
 ## Шаг 3: Проверка подключения
 
@@ -115,6 +121,34 @@
 - Убедитесь, что docker-compose установлен и доступен в PATH
 - Проверьте установку: `docker-compose --version`
 
-### Ошибка "Could not read from remote repository"
-- Убедитесь, что репозиторий клонирован на сервере
-- Проверьте, что у сервера есть доступ к GitHub (для git pull)
+### Ошибка "Could not read from remote repository" или "could not read Username"
+- **Для приватных репозиториев:** Настройте SSH-ключ на сервере для доступа к GitHub:
+  
+  1. Создайте SSH-ключ на сервере (если еще нет):
+     ```bash
+     ssh-keygen -t ed25519 -C "github-deploy" -f ~/.ssh/github_deploy
+     ```
+  
+  2. Добавьте публичный ключ в GitHub:
+     - Перейдите в Settings → SSH and GPG keys → New SSH key
+     - Или для конкретного репозитория: Settings → Deploy keys → Add deploy key
+     - Скопируйте содержимое: `cat ~/.ssh/github_deploy.pub`
+  
+  3. Настройте SSH config (опционально):
+     ```bash
+     cat >> ~/.ssh/config << EOF
+     Host github.com
+       IdentityFile ~/.ssh/github_deploy
+       IdentitiesOnly yes
+     EOF
+     chmod 600 ~/.ssh/config
+     ```
+  
+  4. Проверьте подключение:
+     ```bash
+     ssh -T git@github.com
+     ```
+  
+- **Альтернатива:** Используйте секрет `GIT_REPOSITORY_URL` с HTTPS URL и токеном:
+  - Формат: `https://USERNAME:TOKEN@github.com/username/repo.git`
+  - Создайте Personal Access Token в GitHub: Settings → Developer settings → Personal access tokens

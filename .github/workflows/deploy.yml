@@ -34,6 +34,8 @@ jobs:
             # Определяем URL репозитория
             GIT_REPO="${{ secrets.GIT_REPOSITORY_URL }}"
             if [ -z "$GIT_REPO" ]; then
+              # Используем HTTPS формат (работает для публичных репозиториев без аутентификации)
+              # Для приватных репозиториев укажите GIT_REPOSITORY_URL с SSH или HTTPS+токеном
               GIT_REPO="https://github.com/${{ github.repository }}.git"
             fi
             
@@ -42,7 +44,21 @@ jobs:
               echo "Directory does not exist. Creating directory and cloning repository..."
               mkdir -p "$(dirname "$DEPLOY_PATH")"
               echo "Cloning repository from: $GIT_REPO"
-              git clone "$GIT_REPO" "$DEPLOY_PATH"
+              git clone "$GIT_REPO" "$DEPLOY_PATH" || {
+                echo "Error: Failed to clone repository."
+                if [[ "$GIT_REPO" == git@* ]]; then
+                  echo "SSH clone failed. Make sure:"
+                  echo "1. SSH key is configured on the server for GitHub access"
+                  echo "2. Repository is accessible via SSH"
+                else
+                  echo "HTTPS clone failed. For private repositories:"
+                  echo "1. Use SSH URL: git@github.com:username/repo.git (requires SSH key setup)"
+                  echo "2. Or use HTTPS with token: https://USERNAME:TOKEN@github.com/username/repo.git"
+                  echo "3. Or make repository public"
+                fi
+                echo "Repository URL: $GIT_REPO"
+                exit 1
+              }
             fi
             
             cd "$DEPLOY_PATH"
