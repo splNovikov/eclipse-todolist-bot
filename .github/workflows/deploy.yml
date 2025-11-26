@@ -1,4 +1,4 @@
-name: Deploy to Timeweb
+name: Deploy to Timeweb Server
 
 on:
   push:
@@ -7,31 +7,35 @@ on:
 
 jobs:
   deploy:
+    name: Deploy to Production
     runs-on: ubuntu-latest
     
     steps:
-      - name: Deploy to server
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
+          username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ env.SSH_PORT }}
           script: |
-            cd ~/eclipse-todolist-bot
+            set -e
+            DEPLOY_PATH="${{ secrets.SSH_DEPLOY_PATH }}"
+            if [ -z "$DEPLOY_PATH" ]; then
+              DEPLOY_PATH="~/eclipse-todolist-bot"
+            fi
+            cd $DEPLOY_PATH
+            echo "Pulling latest changes..."
             git pull origin main
-            
-            # Update .env file with bot token
-            echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" > .env
-            echo "PYTHONUNBUFFERED=1" >> .env
-            
-            # Rebuild and restart containers
+            echo "Stopping containers..."
             docker-compose down
-            docker-compose build --no-cache
-            docker-compose up -d
-            
-            # Clean up old images
-            docker image prune -f
-            
-            # Show status
+            echo "Building and starting containers..."
+            docker-compose up -d --build
+            echo "Checking container status..."
             docker-compose ps
             echo "Deployment completed successfully!"
