@@ -27,9 +27,14 @@ jobs:
             set -e
             DEPLOY_PATH="${{ secrets.SSH_DEPLOY_PATH }}"
             if [ -z "$DEPLOY_PATH" ]; then
-              DEPLOY_PATH="~/eclipse-todolist-bot"
+              DEPLOY_PATH="$HOME/eclipse-todolist-bot"
             fi
-            cd $DEPLOY_PATH
+            echo "Deploying to: $DEPLOY_PATH"
+            if [ ! -d "$DEPLOY_PATH" ]; then
+              echo "Error: Directory $DEPLOY_PATH does not exist!"
+              exit 1
+            fi
+            cd "$DEPLOY_PATH"
             echo "Pulling latest changes..."
             git pull origin main
             echo "Stopping containers..."

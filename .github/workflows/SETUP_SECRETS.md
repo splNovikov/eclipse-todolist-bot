@@ -74,8 +74,9 @@
 ### SSH_DEPLOY_PATH (опционально)
 - **Имя:** `SSH_DEPLOY_PATH`
 - **Значение:** Путь к директории проекта на сервере
-- **Пример:** `~/eclipse-todolist-bot` или `/home/user/eclipse-todolist-bot`
-- **По умолчанию:** `~/eclipse-todolist-bot`
+- **Пример:** `$HOME/eclipse-todolist-bot` или `/home/user/eclipse-todolist-bot`
+- **По умолчанию:** `$HOME/eclipse-todolist-bot`
+- **Важно:** Используйте `$HOME` вместо `~`, так как тильда не всегда расширяется в скриптах
 
 ## Шаг 3: Проверка подключения
 
