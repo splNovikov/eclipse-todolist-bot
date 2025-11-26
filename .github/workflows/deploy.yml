@@ -30,13 +30,34 @@ jobs:
               DEPLOY_PATH="$HOME/eclipse-todolist-bot"
             fi
             echo "Deploying to: $DEPLOY_PATH"
+            
+            # Определяем URL репозитория
+            GIT_REPO="${{ secrets.GIT_REPOSITORY_URL }}"
+            if [ -z "$GIT_REPO" ]; then
+              GIT_REPO="https://github.com/${{ github.repository }}.git"
+            fi
+            
+            # Проверяем существование директории
             if [ ! -d "$DEPLOY_PATH" ]; then
-              echo "Error: Directory $DEPLOY_PATH does not exist!"
+              echo "Directory does not exist. Creating directory and cloning repository..."
+              mkdir -p "$(dirname "$DEPLOY_PATH")"
+              echo "Cloning repository from: $GIT_REPO"
+              git clone "$GIT_REPO" "$DEPLOY_PATH"
+            fi
+            
+            cd "$DEPLOY_PATH"
+            
+            # Проверяем, что это git репозиторий
+            if [ ! -d ".git" ]; then
+              echo "Error: $DEPLOY_PATH is not a git repository!"
+              echo "Please ensure the directory exists and contains a git repository."
               exit 1
             fi
-            cd "$DEPLOY_PATH"
+            
             echo "Pulling latest changes..."
-            git pull origin main
+            git fetch origin
+            git reset --hard origin/main
+            git clean -fd
             echo "Stopping containers..."
             docker-compose down
             echo "Building and starting containers..."
